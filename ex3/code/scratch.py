@@ -6,7 +6,7 @@ with open("../data/telescope.srgs", "r") as f:
     lines = f.readlines()
     #print("".join(lines))
     gr = grammar.Grammar(lines)
-print(gr)
+# print(gr)
 
 # print(parser.example_telescope_parse().to_dot())
 
@@ -15,8 +15,8 @@ tokens = sentence.split(" ")
 
 # print(f'Is in grammar: {parser.is_in_language(tokens, gr)}')
 
-parsing_results = parser.parse(tokens, gr)  
+parsing_results = parser.parse(tokens, gr)[0]
 
-print(f'Parsing results: {parsing_results}')
+print(parsing_results.to_dot())
 # one of the parsing results should yield the same result as the example from above
 # assert repr(parser.example_telescope_parse()) in map(repr, parsing_results)

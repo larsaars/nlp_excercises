@@ -9,21 +9,6 @@ def is_in_language(words: list, grammar: Grammar) -> bool:
     return len(parse(words, grammar)) > 0
     
 
-def build_parse_tree(words: list, grammar: Grammar, T: list, i: int, j: int, symbol: Symbol) -> ParseTree:
-    """builds a parse tree for the list of words with grammar and returns it.
-    """
-
-    for k in range(i, j):
-        for rule in grammar.rules:
-            if len(rule.rhs) == 2 and rule.rhs[0] in T[i][k] and rule.rhs[1] in T[k + 1][j]:
-                if rule.lhs == symbol:
-                    return ParseTree(symbol,
-                                     [build_parse_tree(words, grammar, T, i, k, rule.rhs[0]),
-                                      build_parse_tree(words, grammar, T, k + 1, j, rule.rhs[1])])
-
-    # if we reach this point, the symbol is a terminal symbol
-    return ParseTree(symbol, [words[i]])
-
 
 def parse(words: list, grammar: Grammar) -> list:
     """parses the list of words with grammar and returns the (possibly empty) list
@@ -47,13 +32,15 @@ def parse(words: list, grammar: Grammar) -> list:
     # iteration 3: T[3][0], T[4][1]
     # iteration 4: T[4][0]
 
+    # note that the indexing here assumes a left triangular matrix
+
     # the first iteration l (iteration 0) is special (and done beforehand);
     # here we fill the diagonal of the table T
     # with the terminal symbols that can create the words
     # l = 0
     for w in range(n):
         for rule in grammar.rules:
-            if len(rule.rhs) == 1 and rule.rhs[0] == words[w]:
+            if len(rule.rhs) == 1 and rule.rhs[0].symbol == words[w]:
                 T[w][w].add(rule.lhs)
 
     # now we start from the second iteration on
@@ -67,31 +54,67 @@ def parse(words: list, grammar: Grammar) -> list:
             c = r - l
 
             # search for the rules that can create the matching symbols of the current field
-            for k in range(c, r):
+            # and add the left hand side of the rule to the current field
+            for k in range(c, r):  # c <= k < r
                 for rule in grammar.rules:
+                    # compare the rules that contain two non-terminals on the rhs
+                    # with the symbols in the current field
                     if len(rule.rhs) == 2 and rule.rhs[0] in T[k][c] and rule.rhs[1] in T[r][k + 1]:
-                        T[c][r].add(rule.lhs)
+                        T[r][c].add(rule.lhs)
 
 
 
     # the goal is, that in the end, the start symbol is in the bottom left corner of the table T
     # (corresponds to T[n - 1][0])
+    # so if the start symbol is in the bottom left corner of the table T, we can build all possible parse trees
+    # and return them
+    if grammar.start_symbol in T[n - 1][0]:
+        # we start with the start symbol in the bottom left corner of the table T
+        # and build the parse trees recursively
+        def build_parse_trees(symbol: Symbol, row: int, column: int) -> list:
+            """builds the parse trees recursively and returns them as a list"""
 
+            # we create a list of parse trees
+            parse_trees = []
 
-    return T
+            # we loop through all rules that contain the current symbol on the left hand side
+            for rule in grammar.rules:
+                if rule.lhs == symbol:
 
-    # check if the start symbol is in the top right field of the table
-#     if grammar.start_symbol in T[0][n - 1]:
-# if yes, build all possible parse trees
-#         parse_trees = []
-#         for rule in grammar.rules:
-#             if len(rule.rhs) == 2 and rule.rhs[0] in T[0][n - 2] and rule.rhs[1] in T[n - 1][n - 1]:
-#                 parse_trees.append(build_parse_tree(words, grammar, T, 0, n - 1, rule.lhs))
-#         return parse_trees
-#     else:
-# if not, return an empty list
-#         return []
+                    # if the rule contains one terminal symbol on the right hand side
+                    # we create a parse tree with the terminal symbol as a leaf
+                    if len(rule.rhs) == 1 and rule.rhs[0].symbol in words:
+                        parse_trees.append(
+                            ParseTree(rule.lhs,
+                                      [ParseNode(rule.rhs[0])]))
 
+                    # if the rule contains two non-terminal symbols on the right hand side
+                    # we create a parse tree with the non-terminal symbols as nodes
+                    # and we build the parse trees recursively for the non-terminal symbols
+                    elif len(rule.rhs) == 2:
+                        # we loop through all possible rows and columns for the first non-terminal symbol
+                        for k in range(column, row):
+                            # we get the parse trees for the first non-terminal symbol
+                            parse_trees_1 = build_parse_trees(rule.rhs[0], k, column)
+
+                            # we loop through all possible rows and columns for the second non-terminal symbol
+                            for l in range(k + 1, row + 1):
+                                # we get the parse trees for the second non-terminal symbol
+                                parse_trees_2 = build_parse_trees(rule.rhs[1], row, l)
+
+                                # we create a parse tree with the current rule and the parse trees for the non-terminal symbols
+                                parse_trees.append(
+                                    ParseTree(rule.lhs,
+                                              [ParseNode(rule.rhs[0], parse_trees_1),
+                                               ParseNode(rule.rhs[1], parse_trees_2)]))
+
+            # return the list of parse trees
+            return parse_trees
+
+        return build_parse_trees(grammar.start_symbol, n - 1, 0)
+    else:
+        # otherwise we return an empty list
+        return []
 
 
 
