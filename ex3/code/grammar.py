@@ -98,10 +98,11 @@ class Grammar:
             if len(rule.rhs) == 0 or len(rule.rhs) > 2:
                 return False
 
-            # CNF, if
+            # is in CNF, if
             # each rules produces (exactly) two non-terminals
             # OR exactly one terminal symbol
-            if len(rule.rhs) == 2 and not (rule.rhs[0].terminal and rule.rhs[1].terminal): return False
+            if len(rule.rhs) == 2 and not (rule.rhs[0].terminal and rule.rhs[1].terminal): 
+                return False
             if len(rule.rhs) == 1 and not rule.rhs[0].terminal:
                 return False
 
