@@ -1,0 +1,22 @@
+// unlike real SRGS, our grammar parser only supports line-initial comments!
+#ABNF V1.0 utf-8;
+language en;
+// I saw the duck with a telescope
+public $S = $NP $VP;
+$NP = I;
+$NP = $Det  $N;
+// our grammar parser does not support alternatives with |. Instead just write the same rule multiple times.
+$Det = the;
+$Det = a;
+$Det = my;
+$Det = her;
+$N = duck;
+$N = telescope;
+$VP = $VP $PP;
+$VP = $V $NP;
+$V = saw;
+$N = saw;
+$V = duck;
+$NP = $NP $PP;
+$PP = $P $NP;
+$P = with;

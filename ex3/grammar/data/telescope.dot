@@ -1,0 +1,38 @@
+digraph telescope {
+  {
+    rankdir="LR";
+    node [shape="box"]
+    edge [style="invis"];
+    rank="same";
+    I -> saw -> the -> duck -> with -> a -> telescope;
+  }
+  rankdir="TB";
+  S;
+  node [shape="none"]
+  edge [style="solid"];
+  { 
+    rankdir="LR";
+    edge [style="invis"];
+    rank="same";
+    NP1 -> V -> Det1 -> N1 -> P -> Det2 -> N2;
+  }
+  S -> NP1 
+  S -> VP1;
+  NP1 -> I;
+  VP1 -> VP2;
+  VP1 -> PP;
+  VP2 -> V;
+  VP2 -> NP2;
+  V -> saw;
+  NP2 -> Det1;
+  NP2 -> N1;
+  Det1 -> the;
+  N1 -> duck;
+  PP -> P;
+  PP -> NP3;
+  P -> with
+  NP3 -> Det2;
+  NP3 -> N2;
+  Det2 -> a;
+  N2 -> telescope; 
+}
