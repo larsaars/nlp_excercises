@@ -1,2 +1,2 @@
-# nlp_excercises
-Excercises to the NLP course.
+# NLP exercises
+Exercises to the NLP course.
