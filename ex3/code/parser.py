@@ -12,8 +12,7 @@ def is_in_language(words: list, grammar: Grammar) -> bool:
 
 
 def parse(words: list, grammar: Grammar) -> list:
-    """parses the list of words with grammar and returns the (possibly empty) list
-    of possible parses. The ordering of possible parses is arbitrary.
+    """parses the list of words with grammar and returns the (possibly empty) list of possible parses. The ordering of possible parses is arbitrary.
     returns a list of ParseTree
     """
 
@@ -26,7 +25,9 @@ def parse(words: list, grammar: Grammar) -> list:
 
     # we are building the parsing trees at the same time
     # they are built from bottom to top,
-    # the same way the algorithm acts
+    # the same way the algorithm flows
+
+    # build the table F with a size of n x n which will contain the parse nodes
     F = [[[] for _ in range(n)] for _ in range(n)]
 
 
@@ -48,7 +49,8 @@ def parse(words: list, grammar: Grammar) -> list:
         for rule in grammar.rules:
             if len(rule.rhs) == 1 and rule.rhs[0].symbol == words[w]:
                 T[w][w].add(rule.lhs)
-                F[w][w].append(ParseNode(rule.lhs))
+                # build the parse tree terminal nodes
+                F[w][w].append(ParseNode(rule.lhs, [ParseNode(rule.rhs[0])]))
 
 
     # now we start from the second iteration on
@@ -70,25 +72,19 @@ def parse(words: list, grammar: Grammar) -> list:
                     if len(rule.rhs) == 2 and rule.rhs[0] in T[k][c] and rule.rhs[1] in T[r][k + 1]:
                         T[r][c].add(rule.lhs)
 
-                        is_last = c == 0 and r == n - 1 and rule.lhs == grammar.start_symbol
-
+                        # build for each possible left node and right node
+                        # a new parse node with the left hand side of the rule
                         for left_node in F[k][c]:
                             for right_node in F[r][k + 1]:
-                                if is_last:
-                                    F[r][c].append(ParseTree(rule.lhs, [left_node, right_node]))
-                                else:
-                                    F[r][c].append(ParseNode(rule.lhs, [left_node, right_node]))
+                                F[r][c].append(ParseTree(rule.lhs, [left_node, right_node]))
 
 
     # the goal is, that in the end, the start symbol is in the bottom left corner of the table T
     # (corresponds to T[n - 1][0])
-    # so if the start symbol is in the bottom left corner of the table T, we can build all possible parse trees
-    # and return them
+    # so if the start symbol is in the bottom left corner of the table T, we can collect all possible parse trees
+    # from this field F[n - 1][0] and return the ones with having the start symbol as the root node symbol
     if grammar.start_symbol in T[n - 1][0]:
-        # we start with the start symbol in the bottom left corner of the table T
-        # and build the parse trees recursively
-
-        return F[n - 1][0]
+        return [node for node in F[n - 1][0] if node.symbol == grammar.start_symbol]
     else:
         # otherwise we return an empty list
         return []

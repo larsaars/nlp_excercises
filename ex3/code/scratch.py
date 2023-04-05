@@ -15,8 +15,12 @@ tokens = sentence.split(" ")
 
 # print(f'Is in grammar: {parser.is_in_language(tokens, gr)}')
 
-parsing_results = parser.parse(tokens, gr)[0]
+parsing_results = parser.parse(tokens, gr)
 
-print(parsing_results.to_dot())
+for result in parsing_results:
+    print()
+    print(result.to_dot())
+
+print(len(parsing_results))
 # one of the parsing results should yield the same result as the example from above
 # assert repr(parser.example_telescope_parse()) in map(repr, parsing_results)
