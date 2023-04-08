@@ -9,13 +9,12 @@ class Symbol:
     terminal: bool
     symbol: str
 
-    # the symbol that this symbol was introduced by normalizing the grammar (most upper)
-    # if is None, this symbol is not a newly introduced symbol
-    norm_parent_symbol = None
+    is_symbol: bool = False  # whether this symbol is an extra symbol created by normalization
 
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str, is_extra=False):
         self.terminal = not symbol.startswith("$")
         self.symbol = symbol if self.terminal else symbol[1:]
+        self.is_extra = is_extra
 
     def __repr__(self):
         return ("" if self.terminal else "$") + self.symbol
@@ -25,10 +24,6 @@ class Symbol:
 
     def __hash__(self):
         return hash(self.symbol)
-
-    def is_extra(self):
-        """returns whether this symbol is an extra symbol created by normalization"""
-        return self.norm_parent_symbol is not None
 
 
 class GrammarRule:
@@ -85,10 +80,9 @@ class Grammar:
             self.rule_map[tuple(r.rhs)].append(r)
 
 
-    def get_symbol(self, symbol: str, norm_parent_symbol=None):
+    def get_symbol(self, symbol: str, is_extra=False):
         if symbol not in self.symbols:
-            self.symbols[symbol] = Symbol(symbol)
-            self.symbols[symbol].norm_parent_symbol = norm_parent_symbol 
+            self.symbols[symbol] = Symbol(symbol, is_extra=is_extra)
 
         return self.symbols[symbol]
 
@@ -99,28 +93,6 @@ class Grammar:
 
     def to_CNF(self):
         """transforms grammar to "relaxed" CNF"""
-
-        # otherwise, we need to add new rules to the grammar
-        # first remove chains of Non-Terminals
-        # e.g. A = B C; B = D; C = E; -> A = D E;
-        # this is done by repeatedly replacing all rules of the form A = B C with A = B' C
-        # until no such rule exists anymore
-#         while True:
-#             changed = False
-#             for rule in self.rules:
-#                 if len(rule.rhs) == 2 and not rule.rhs[0].terminal and not rule.rhs[1].terminal:
-#                     changed = True
-#                     for rule2 in self.rules:
-#                         if rule2.lhs == rule.rhs[1]:
-#                             self.rules.append(
-#                                 GrammarRule(
-#                                     rule.lhs,
-#                                     [rule.rhs[0], rule2.rhs[0]]
-#                                 )
-#                             )
-#             if not changed:
-#                 break
-
 
         # the idea is to split rules with more than 2 symbols on the right hand side
         # into multiple rules with excactly two symbols on the right hand side
@@ -143,7 +115,7 @@ class Grammar:
                         # else we create a new symbol
                         # define which symbol is the parent of all newly created symbols in this rule iteration
                         self.extra_norm_id += 1
-                        new_rhs = self.get_symbol(f'$E{self.extra_norm_id}', norm_parent_symbol=rule.lhs)
+                        new_rhs = self.get_symbol(f'$E{self.extra_norm_id}', is_extra=True)
 
                     # and append the new rule with the new lhs;
                     # for the rhs we use the current rhs symbol of the old rule and the newly created symbol
@@ -153,7 +125,7 @@ class Grammar:
                         GrammarRule(new_lhs, [rule.rhs[i], new_rhs])
                     )
 
-                    new_lhs = new_rhs  # newlhy created rhs will be next lhs
+                    new_lhs = new_rhs  # newly created rhs will be next lhs
 
 
         # rebuild rule map

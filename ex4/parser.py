@@ -80,38 +80,21 @@ def parse(words: list, grammar: Grammar) -> list:
                             for right_node in F[r][k + 1]:
                                 F[r][c].append(ParseTree(rule.lhs, [left_node, right_node]))
 
+    # let algorithm also accept unary NT rules
+    # (rules with only one non-terminal on the rhs)
+    # by adding the non-terminal symbols to the table T
+    for l in range(1, n):
+        for r in range(l, n):
+            c = r - l
+            for rule in grammar.rules:
+                if len(rule.rhs) == 1 and not rule.rhs[0].terminal and rule.rhs[0] not in T[r][c]:
+                    T[r][c].add(rule.rhs[0])
 
-    # replace the extra created symbols with the original symbols
-    # this is necessary after parsing
-    def replace_symbols(node: ParseNode, prod_collection: list):
-        for prod in node.productions:
-            # if is collecting the non-extra children symbols
-            # and the current symbol is extra, pass the given list and
-            # append all non-extra children symbols to the list
-            if prod_collection is not None:
-                if prod.symbol.is_extra():
-                    replace_symbols(prod, prod_collection)  # collect children 
-                else:
-                    prod_collection.append(prod)  # add to list of parent node
-            else:
-                # if is not collecting, but child is extra,
-                # start collecting (without losing the current node's productions)
-                # and set the current's node productions equal to the collected list
-                if prod.symbol.is_extra():
-                    prod_collection = [p for p in node.productions if not p.symbol.is_extra()]
-                    replace_symbols(prod, prod_collection)
-                    node.productions = prod_collection
-                else:
-                    # in all other cases just keep on going
-                    # without collecting
-                    replace_symbols(prod, None)
+                    # build for each possible left node and right node
+                    # a new parse node with the left hand side of the rule
+                    for left_node in F[r][c]:
+                        F[r][c].append(ParseTree(rule.lhs, [left_node]))
 
-
-    for tree in F[n - 1][0]:
-        if tree.symbol == grammar.start_symbol:
-            replace_symbols(tree, None)
-
-    
 
     # the goal is, that in the end, the start symbol is in the bottom left corner of the table T
     # (corresponds to T[n - 1][0])
