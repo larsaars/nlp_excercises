@@ -1,0 +1,23 @@
+#ABNF V1.0 utf-8;
+language en;
+public $S = $NP $VP $NP;
+
+$NP = $Det $N;
+// $VP = $VP $PP;
+$VP = $V $NP;
+$NP = $NP $PP;
+$PP = $P $NP;
+
+$Det = the;
+$Det = a;
+$Det = my;
+$Det = her;
+
+$N = duck;
+$N = telescope;
+
+$V = saw;
+
+$P = with;
+
+$NP = I;
